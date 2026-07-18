@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/plants.db
+data/plants.db-*
+data/photos/
