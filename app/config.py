@@ -16,6 +16,7 @@ def _path(env_var: str, default: str) -> Path:
 class Settings:
     plantnet_api_key: str = os.environ.get("PLANTNET_API_KEY", "")
     anthropic_api_key: str = os.environ.get("ANTHROPIC_API_KEY", "")
+    trefle_api_key: str = os.environ.get("TREFLE_API_KEY", "")
     api_bearer_token: str = os.environ.get("API_BEARER_TOKEN", "")
 
     db_path: Path = _path("DB_PATH", "data/plants.db")

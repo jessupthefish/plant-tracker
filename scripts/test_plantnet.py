@@ -40,7 +40,7 @@ def main():
     else:
         candidates, raw = plantnet_client.identify_species(image_bytes)
         for c in candidates:
-            print(f"{c.probability:.2%}  {c.scientific_name}  ({', '.join(c.common_names)})")
+            print(f"{c.probability:.2%}  {c.scientific_name}  ({c.common_name})")
 
     print(f"\nremaining requests today: {raw.get('remainingIdentificationRequests')}")
     print("\n--- raw response ---")

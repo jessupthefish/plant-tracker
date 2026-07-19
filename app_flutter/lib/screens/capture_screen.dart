@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../api_client.dart';
+import 'identify_result_screen.dart';
 import 'identify_screen.dart';
 import 'save_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
-  const CaptureScreen({super.key});
+  final bool identifyOnly;
+
+  const CaptureScreen({super.key, this.identifyOnly = false});
 
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
@@ -29,7 +32,19 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final candidates = await _api.identify(photo);
       if (!mounted) return;
       if (candidates.isEmpty) {
-        _goToSaveWithoutId(photo);
+        if (widget.identifyOnly) {
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute(
+              builder: (_) => IdentifyResultScreen(
+                photo: photo,
+                candidate: null,
+                onSave: () => _goToSaveWithoutId(photo),
+              ),
+            ),
+          );
+        } else {
+          _goToSaveWithoutId(photo);
+        }
         return;
       }
       // A successful save further down this flow uses pushAndRemoveUntil to
@@ -37,7 +52,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
       // it — so there's nothing to do with the result here.
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
-          builder: (_) => IdentifyScreen(photo: photo, candidates: candidates),
+          builder: (_) => IdentifyScreen(
+            photo: photo,
+            candidates: candidates,
+            identifyOnly: widget.identifyOnly,
+          ),
         ),
       );
     } catch (e) {
@@ -50,7 +69,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  void _goToSaveWithoutId(File photo) async {
+  Future<void> _goToSaveWithoutId(File photo) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(builder: (_) => SaveScreen(photo: photo)),
     );
@@ -59,7 +78,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add a Plant')),
+      appBar: AppBar(title: Text(widget.identifyOnly ? 'Identify a Plant' : 'Add a Plant')),
       body: Center(
         child: _loading
             ? const Column(

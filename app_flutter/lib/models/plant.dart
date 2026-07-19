@@ -96,19 +96,91 @@ class Plant {
 
 class IdentifyCandidate {
   final String scientificName;
-  final List<String> commonNames;
+  final String? commonName;
   final double probability;
 
   IdentifyCandidate({
     required this.scientificName,
-    required this.commonNames,
+    required this.commonName,
     required this.probability,
   });
 
   factory IdentifyCandidate.fromJson(Map<String, dynamic> json) => IdentifyCandidate(
         scientificName: json['scientific_name'] as String,
-        commonNames: (json['common_names'] as List).map((e) => e as String).toList(),
+        commonName: json['common_name'] as String?,
         probability: (json['probability'] as num).toDouble(),
+      );
+}
+
+class EnrichedPhoto {
+  final String url;
+  final String source;
+  final String? attribution;
+  final String? licenseCode;
+
+  EnrichedPhoto({required this.url, required this.source, this.attribution, this.licenseCode});
+
+  factory EnrichedPhoto.fromJson(Map<String, dynamic> json) => EnrichedPhoto(
+        url: json['url'] as String,
+        source: json['source'] as String,
+        attribution: json['attribution'] as String?,
+        licenseCode: json['license_code'] as String?,
+      );
+}
+
+class SpeciesEnrichment {
+  final String scientificName;
+  final int? gbifUsageKey;
+  final String? family;
+  final String? genus;
+  final String? commonName;
+  final String? commonNameSource;
+  final String? description;
+  final String? descriptionSource;
+  final List<EnrichedPhoto> photos;
+  final String? careLight;
+  final String? careHumidity;
+  final double? careMinTempC;
+  final double? careMaxTempC;
+  final String? careSoil;
+  final bool fromCache;
+
+  SpeciesEnrichment({
+    required this.scientificName,
+    this.gbifUsageKey,
+    this.family,
+    this.genus,
+    this.commonName,
+    this.commonNameSource,
+    this.description,
+    this.descriptionSource,
+    required this.photos,
+    this.careLight,
+    this.careHumidity,
+    this.careMinTempC,
+    this.careMaxTempC,
+    this.careSoil,
+    required this.fromCache,
+  });
+
+  factory SpeciesEnrichment.fromJson(Map<String, dynamic> json) => SpeciesEnrichment(
+        scientificName: json['scientific_name'] as String,
+        gbifUsageKey: json['gbif_usage_key'] as int?,
+        family: json['family'] as String?,
+        genus: json['genus'] as String?,
+        commonName: json['common_name'] as String?,
+        commonNameSource: json['common_name_source'] as String?,
+        description: json['description'] as String?,
+        descriptionSource: json['description_source'] as String?,
+        photos: (json['photos'] as List)
+            .map((e) => EnrichedPhoto.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        careLight: json['care_light'] as String?,
+        careHumidity: json['care_humidity'] as String?,
+        careMinTempC: (json['care_min_temp_c'] as num?)?.toDouble(),
+        careMaxTempC: (json['care_max_temp_c'] as num?)?.toDouble(),
+        careSoil: json['care_soil'] as String?,
+        fromCache: json['from_cache'] as bool,
       );
 }
 

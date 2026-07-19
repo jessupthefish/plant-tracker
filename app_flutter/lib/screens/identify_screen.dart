@@ -1,17 +1,25 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../api_client.dart';
 import '../models/plant.dart';
 import 'detail_screen.dart';
+import 'identify_result_screen.dart';
 import 'save_screen.dart';
 
 class IdentifyScreen extends StatelessWidget {
   final File photo;
   final List<IdentifyCandidate> candidates;
+  final bool identifyOnly;
 
-  IdentifyScreen({super.key, required this.photo, required this.candidates});
+  IdentifyScreen({
+    super.key,
+    required this.photo,
+    required this.candidates,
+    this.identifyOnly = false,
+  });
 
   final _api = ApiClient();
 
@@ -39,7 +47,11 @@ class IdentifyScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _createNew(BuildContext context, IdentifyCandidate? candidate) async {
+  Future<void> _createNew(
+    BuildContext context,
+    IdentifyCandidate? candidate, {
+    String? commonNameOverride,
+  }) async {
     String? variety;
     if (candidate != null) {
       variety = await _pickVariety(context, candidate.scientificName);
@@ -53,7 +65,7 @@ class IdentifyScreen extends StatelessWidget {
         builder: (_) => SaveScreen(
           photo: photo,
           speciesScientific: candidate?.scientificName,
-          commonName: candidate?.commonNames.isNotEmpty == true ? candidate!.commonNames.first : null,
+          commonName: commonNameOverride ?? candidate?.commonName,
           idConfidence: candidate?.probability,
           idSource: candidate != null ? 'plantnet' : null,
           variety: variety,
@@ -98,6 +110,40 @@ class IdentifyScreen extends StatelessWidget {
   Future<void> _choose(BuildContext context, IdentifyCandidate? candidate) async {
     if (candidate == null) {
       await _createNew(context, null);
+      return;
+    }
+
+    if (identifyOnly) {
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      SpeciesEnrichment? enrichment;
+      try {
+        final locale = ui.PlatformDispatcher.instance.locale.toString();
+        final country = await ApiClient.getLocation();
+        enrichment = await _api.enrichSpecies(
+          candidate.scientificName,
+          commonName: candidate.commonName,
+          locale: locale,
+          country: (country != null && country.isNotEmpty) ? country : null,
+        );
+      } catch (_) {
+        enrichment = null; // degrade to the raw Pl@ntNet candidate fields
+      }
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // dismiss loading dialog
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => IdentifyResultScreen(
+            photo: photo,
+            candidate: candidate,
+            enrichment: enrichment,
+            onSave: () => _createNew(context, candidate, commonNameOverride: enrichment?.commonName),
+          ),
+        ),
+      );
       return;
     }
 
@@ -154,9 +200,7 @@ class IdentifyScreen extends StatelessWidget {
             Card(
               child: ListTile(
                 title: Text(c.scientificName, style: const TextStyle(fontStyle: FontStyle.italic)),
-                subtitle: Text(
-                  c.commonNames.isNotEmpty ? c.commonNames.join(', ') : 'No common name',
-                ),
+                subtitle: Text(c.commonName ?? 'No common name'),
                 trailing: Text('${(c.probability * 100).toStringAsFixed(0)}%'),
                 onTap: () => _choose(context, c),
               ),

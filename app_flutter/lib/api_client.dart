@@ -30,6 +30,11 @@ class ApiClient {
   static Future<void> setToken(String token) =>
       _storage.write(key: _tokenKey, value: token.trim());
 
+  static const _locationKey = 'user_location';
+  static Future<String?> getLocation() => _storage.read(key: _locationKey);
+  static Future<void> setLocation(String location) =>
+      _storage.write(key: _locationKey, value: location.trim());
+
   Future<Map<String, String>> _headers() async {
     final token = await getToken();
     return {
@@ -63,6 +68,24 @@ class ApiClient {
     return _handle(response, (body) => (body['candidates'] as List)
         .map((e) => IdentifyCandidate.fromJson(e as Map<String, dynamic>))
         .toList());
+  }
+
+  Future<SpeciesEnrichment> enrichSpecies(
+    String scientificName, {
+    String? commonName,
+    String? locale,
+    String? country,
+  }) async {
+    final query = <String, String>{
+      'scientific_name': scientificName,
+      if (commonName != null && commonName.isNotEmpty) 'common_name': commonName,
+      if (locale != null && locale.isNotEmpty) 'locale': locale,
+      if (country != null && country.isNotEmpty) 'country': country,
+    };
+    final uri = await _uri('/api/v1/species/enrich', query);
+    final response =
+        await http.get(uri, headers: await _headers()).timeout(const Duration(seconds: 12));
+    return _handle(response, (body) => SpeciesEnrichment.fromJson(body as Map<String, dynamic>));
   }
 
   Future<List<DiseaseCandidate>> checkHealth(File photo) async {

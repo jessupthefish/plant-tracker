@@ -17,15 +17,15 @@ class PlantNetError(RuntimeError):
 
 
 class Candidate:
-    def __init__(self, scientific_name: str, common_names: list[str], probability: float):
+    def __init__(self, scientific_name: str, common_name: str | None, probability: float):
         self.scientific_name = scientific_name
-        self.common_names = common_names
+        self.common_name = common_name
         self.probability = probability
 
     def to_dict(self) -> dict:
         return {
             "scientific_name": self.scientific_name,
-            "common_names": self.common_names,
+            "common_name": self.common_name,
             "probability": self.probability,
         }
 
@@ -45,7 +45,12 @@ class DiseaseCandidate:
 
 
 def _post(
-    path: str, image_bytes: bytes, *, nb_results: int, treat_as_empty: frozenset[int] = frozenset()
+    path: str,
+    image_bytes: bytes,
+    *,
+    nb_results: int,
+    lang: str | None = None,
+    treat_as_empty: frozenset[int] = frozenset(),
 ) -> dict:
     """POSTs an image to Pl@ntNet. Status codes in `treat_as_empty` come back
     as {} rather than raising, for endpoints where "no match" is signalled
@@ -56,6 +61,8 @@ def _post(
 
     files = {"images": ("photo.jpg", image_bytes, "image/jpeg")}
     params = {"api-key": settings.plantnet_api_key, "nb-results": nb_results}
+    if lang:
+        params["lang"] = lang
 
     response = httpx.post(f"{BASE_URL}{path}", files=files, params=params, timeout=30.0)
     if response.status_code in treat_as_empty:
@@ -65,9 +72,23 @@ def _post(
     return response.json()
 
 
+def _pick_common_name(common_names: list[str]) -> str | None:
+    """Picks one deterministic common name from Pl@ntNet's commonNames list.
+
+    With lang="en" requested, Pl@ntNet already returns English-only names
+    ordered by relevance, so the first non-blank entry (after trimming) is
+    sufficient.
+    """
+    for name in common_names:
+        cleaned = name.strip()
+        if cleaned:
+            return cleaned
+    return None
+
+
 def identify_species(image_bytes: bytes, top_n: int = 5) -> tuple[list[Candidate], dict]:
     """Returns (candidates sorted by probability desc, raw API response)."""
-    raw = _post(f"/v2/identify/{SPECIES_PROJECT}", image_bytes, nb_results=top_n)
+    raw = _post(f"/v2/identify/{SPECIES_PROJECT}", image_bytes, nb_results=top_n, lang="en")
     try:
         results = raw["results"]
     except (KeyError, TypeError) as exc:
@@ -76,7 +97,7 @@ def identify_species(image_bytes: bytes, top_n: int = 5) -> tuple[list[Candidate
     candidates = [
         Candidate(
             scientific_name=r["species"].get("scientificNameWithoutAuthor", "Unknown"),
-            common_names=r["species"].get("commonNames") or [],
+            common_name=_pick_common_name(r["species"].get("commonNames") or []),
             probability=r.get("score", 0.0),
         )
         for r in results[:top_n]

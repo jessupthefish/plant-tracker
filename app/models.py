@@ -37,6 +37,15 @@ class PlantPhoto(SQLModel, table=True):
     plant: "Plant" = Relationship(back_populates="photos")
 
 
+class SpeciesEnrichment(SQLModel, table=True):
+    __tablename__ = "species_enrichments"
+
+    scientific_name: str = Field(primary_key=True)  # GBIF canonical name, lowercased
+    gbif_usage_key: int | None = None
+    raw_data: str  # JSON blob: vernacular_names[], inaturalist_taxon, wikipedia_summary, trefle_care
+    fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class Plant(SQLModel, table=True):
     __tablename__ = "plants"
 

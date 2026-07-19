@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class CandidateOut(BaseModel):
     scientific_name: str
-    common_names: list[str]
+    common_name: str | None
     probability: float
 
 
@@ -30,6 +30,31 @@ class VarietyCandidateOut(BaseModel):
 
 class VarietyResponse(BaseModel):
     candidates: list[VarietyCandidateOut]
+
+
+class EnrichedPhotoOut(BaseModel):
+    url: str
+    source: str  # "inaturalist" | "wikipedia"
+    attribution: str | None = None
+    license_code: str | None = None
+
+
+class SpeciesEnrichmentOut(BaseModel):
+    scientific_name: str
+    gbif_usage_key: int | None = None
+    family: str | None = None
+    genus: str | None = None
+    common_name: str | None = None
+    common_name_source: str | None = None  # "catalog" | "inaturalist" | "gbif_vernacular" | "plantnet_fallback" | None
+    description: str | None = None
+    description_source: str | None = None  # "wikipedia" | None
+    photos: list[EnrichedPhotoOut] = []
+    care_light: str | None = None
+    care_humidity: str | None = None
+    care_min_temp_c: float | None = None
+    care_max_temp_c: float | None = None
+    care_soil: str | None = None
+    from_cache: bool = False
 
 
 class PhotoOut(BaseModel):

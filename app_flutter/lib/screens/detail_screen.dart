@@ -158,7 +158,7 @@ class _DetailScreenState extends State<DetailScreen> {
             for (final c in candidates)
               ListTile(
                 title: Text(c.scientificName, style: const TextStyle(fontStyle: FontStyle.italic)),
-                subtitle: Text(c.commonNames.isNotEmpty ? c.commonNames.join(', ') : 'No common name'),
+                subtitle: Text(c.commonName ?? 'No common name'),
                 trailing: Text('${(c.probability * 100).toStringAsFixed(0)}%'),
                 onTap: () => Navigator.pop(ctx, c),
               ),
@@ -168,7 +168,7 @@ class _DetailScreenState extends State<DetailScreen> {
       if (chosen != null && mounted) {
         setState(() {
           _speciesController.text = chosen.scientificName;
-          if (chosen.commonNames.isNotEmpty) _commonNameController.text = chosen.commonNames.first;
+          if (chosen.commonName != null) _commonNameController.text = chosen.commonName!;
         });
       }
     } catch (e) {

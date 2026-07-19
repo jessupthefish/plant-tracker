@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadF
 from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 
-from app import care_client, plantnet_client, vault_sync
+from app import care_client, plantnet_client, species_enrichment, vault_sync
 from app.config import settings
 from app.db import get_session, init_db
 from app.models import Plant, PlantPhoto, Tag
@@ -17,6 +17,7 @@ from app.schemas import (
     PhotoOut,
     PlantOut,
     PlantUpdate,
+    SpeciesEnrichmentOut,
     VarietyCandidateOut,
     VarietyResponse,
 )
@@ -28,7 +29,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Plant Tracker", lifespan=lifespan)
+app = FastAPI(title="NOIDChonk", lifespan=lifespan)
 
 
 def require_auth(authorization: str | None = Header(default=None)) -> None:
@@ -144,7 +145,7 @@ async def identify(photo: UploadFile = File(...)):
         candidates=[
             CandidateOut(
                 scientific_name=c.scientific_name,
-                common_names=c.common_names,
+                common_name=c.common_name,
                 probability=c.probability,
             )
             for c in candidates
@@ -186,6 +187,24 @@ async def identify_variety(
             VarietyCandidateOut(name=c.name, probability=c.probability) for c in candidates
         ]
     )
+
+
+@app.get("/api/v1/species/enrich", response_model=SpeciesEnrichmentOut, dependencies=[Depends(require_auth)])
+async def enrich_species_route(
+    scientific_name: str,
+    common_name: str | None = None,
+    locale: str | None = None,
+    country: str | None = None,
+    session: Session = Depends(get_session),
+):
+    result = await species_enrichment.enrich_species(
+        session=session,
+        scientific_name=scientific_name,
+        locale=locale,
+        country=country,
+        fallback_common_name=common_name,
+    )
+    return SpeciesEnrichmentOut(**result)
 
 
 @app.post("/api/v1/plants", response_model=PlantOut, dependencies=[Depends(require_auth)])

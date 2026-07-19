@@ -80,6 +80,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
     _refresh();
   }
 
+  Future<void> _openIdentify() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const CaptureScreen(identifyOnly: true)),
+    );
+    _refresh();
+  }
+
   Future<void> _openDetail(String id) async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute(builder: (_) => DetailScreen(plantId: id)),
@@ -202,10 +209,24 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCapture,
-        icon: const Icon(Icons.add_a_photo),
-        label: const Text('Add plant'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'identify',
+            onPressed: _openIdentify,
+            icon: const Icon(Icons.search),
+            label: const Text('Identify'),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add',
+            onPressed: _openCapture,
+            icon: const Icon(Icons.add_a_photo),
+            label: const Text('Add plant'),
+          ),
+        ],
       ),
     );
   }

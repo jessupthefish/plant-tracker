@@ -12,6 +12,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _urlController = TextEditingController();
   final _tokenController = TextEditingController();
+  final _locationController = TextEditingController();
   final _api = ApiClient();
   String _status = '';
   bool _checking = false;
@@ -25,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _load() async {
     _urlController.text = await ApiClient.getBaseUrl() ?? '';
     _tokenController.text = await ApiClient.getToken() ?? '';
+    _locationController.text = await ApiClient.getLocation() ?? '';
     setState(() {});
   }
 
@@ -33,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (url.endsWith('/')) url = url.substring(0, url.length - 1);
     await ApiClient.setBaseUrl(url);
     await ApiClient.setToken(_tokenController.text.trim());
+    await ApiClient.setLocation(_locationController.text.trim());
     setState(() => _status = 'Saved.');
   }
 
@@ -78,6 +81,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            const Text('Location (optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            TextField(
+              controller: _locationController,
+              decoration: const InputDecoration(
+                hintText: 'e.g. United States — helps rank species common names',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 24),
             Row(
