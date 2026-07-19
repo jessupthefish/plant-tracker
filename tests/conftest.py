@@ -10,6 +10,7 @@ os.environ["DB_PATH"] = str(_TEST_ROOT / "test.db")
 os.environ["PHOTOS_DIR"] = str(_TEST_ROOT / "photos")
 os.environ["VAULT_LOCAL_PATH"] = str(_TEST_ROOT / "vault")
 os.environ["VAULT_SSH_HOST"] = "local"
+os.environ["API_BEARER_TOKEN"] = ""
 
 from sqlmodel import SQLModel  # noqa: E402
 
