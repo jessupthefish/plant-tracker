@@ -12,7 +12,7 @@ class PlantTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Plant Tracker',
+      title: 'NOIDChonk',
       theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.green)),
       home: const CatalogScreen(),
     );
