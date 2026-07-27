@@ -11,6 +11,8 @@ os.environ["PHOTOS_DIR"] = str(_TEST_ROOT / "photos")
 os.environ["VAULT_LOCAL_PATH"] = str(_TEST_ROOT / "vault")
 os.environ["VAULT_SSH_HOST"] = "local"
 os.environ["API_BEARER_TOKEN"] = ""
+# require_auth fails closed on a blank token, so tests must opt out explicitly.
+os.environ["ALLOW_UNAUTHENTICATED"] = "1"
 
 from sqlmodel import SQLModel  # noqa: E402
 

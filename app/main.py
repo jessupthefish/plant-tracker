@@ -1,3 +1,4 @@
+import secrets
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime
 
@@ -34,9 +35,19 @@ app = FastAPI(title="NOIDChonk", lifespan=lifespan)
 
 def require_auth(authorization: str | None = Header(default=None)) -> None:
     if not settings.api_bearer_token:
-        return  # no token configured -> auth disabled (local dev)
+        # Fail CLOSED. This API is internet-reachable via the Cloudflare tunnel,
+        # so a blank or typo'd API_BEARER_TOKEN must refuse traffic rather than
+        # silently serve every route unauthenticated.
+        if settings.allow_unauthenticated:
+            return
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "Server misconfigured: API_BEARER_TOKEN is not set. "
+            "Set it, or set ALLOW_UNAUTHENTICATED=1 to run without auth locally.",
+        )
     expected = f"Bearer {settings.api_bearer_token}"
-    if authorization != expected:
+    # Constant-time compare so response timing cannot leak the token.
+    if authorization is None or not secrets.compare_digest(authorization, expected):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or missing bearer token")
 
 

@@ -18,6 +18,11 @@ class Settings:
     anthropic_api_key: str = os.environ.get("ANTHROPIC_API_KEY", "")
     trefle_api_key: str = os.environ.get("TREFLE_API_KEY", "")
     api_bearer_token: str = os.environ.get("API_BEARER_TOKEN", "")
+    # Auth fails CLOSED when no bearer token is set. This service is reachable
+    # from the internet through a Cloudflare tunnel, so a blank or typo'd
+    # API_BEARER_TOKEN must not silently disable auth. Set this to 1 only for
+    # local development.
+    allow_unauthenticated: bool = os.environ.get("ALLOW_UNAUTHENTICATED", "") == "1"
 
     db_path: Path = _path("DB_PATH", "data/plants.db")
     photos_dir: Path = _path("PHOTOS_DIR", "data/photos")
