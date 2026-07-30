@@ -5,3 +5,10 @@ __pycache__/
 data/plants.db
 data/plants.db-*
 data/photos/
+AGENTS.md
+CLAUDE.md
+DEPLOY_BRIEF.md
+GETTING_STARTED.md
+
+# Internal working notes: kept local only, not published. They live on disk
+# and in the encrypted off-drive backup.
